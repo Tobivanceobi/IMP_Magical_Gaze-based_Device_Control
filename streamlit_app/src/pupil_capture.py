@@ -2,6 +2,7 @@ import zmq
 import cv2
 import numpy as np
 from PIL import Image
+import msgpack
 
 
 class PupilCapture:
@@ -28,9 +29,20 @@ class PupilCapture:
         sub_frame_world = self.ctx.socket(zmq.SUB)
         sub_frame_world.connect(f'tcp://{self.ip}:{self.sub_port}')
         sub_frame_world.subscribe("frame.world")
+
         frame = sub_frame_world.recv_multipart()
         image_bytes = frame[2]
         decoded_frame = cv2.imdecode(np.frombuffer(image_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
         rgb_frame = cv2.cvtColor(decoded_frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(rgb_frame)
         return img
+
+    def receive_gaze_information(self):
+        subscriber = self.ctx.socket(zmq.SUB)
+        subscriber.connect(f'tcp://{self.ip}:{self.sub_port}')
+        subscriber.subscribe('gaze.')  # receive all gaze messages
+        topic, payload = subscriber.recv_multipart()
+        message = msgpack.loads(payload)
+        gaze = message['norm_pos'.encode()]
+
+        return gaze
