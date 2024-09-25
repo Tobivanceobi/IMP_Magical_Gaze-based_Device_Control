@@ -1,4 +1,11 @@
-zmq
+zmq~=0.0.0
 msgpack==0.5.6
-opencv-python
+opencv-python~=4.10.0.84
 matplotlib
+
+streamlit~=1.38.0
+ultralytics~=8.2.92
+pandas~=2.2.2
+pyzmq~=26.2.0
+numpy~=1.26.4
+pillow~=10.4.0
