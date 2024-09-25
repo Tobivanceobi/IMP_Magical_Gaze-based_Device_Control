@@ -10,7 +10,7 @@ from ..utils import Page
 
 class PageObjectDetection(Page):
     NAME = "Object Detection"
-    MODEL_PATH = '/home/tobias/Desktop/Uni/IMP/IMP_Magical_Gaze-based_Device_Control/.local/yolov8n.pt'
+    MODEL_PATH = '../.local/yolov8n.pt'
     def __init__(self):
         self.controller = PupilLabsController()
 
