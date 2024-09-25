@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import zmq
 from PIL import Image
+import socket
 
 
 
@@ -27,12 +28,12 @@ class PupilLabsController:
     def __init__(self, host='localhost', port=50020):
         self.host = host
         self.port = port
+        if self.is_service_online():
+            self.ctx = zmq.Context()
+            self.sub_port, self.pub_port = self.__get_sub_pub_ports()
 
-        self.ctx = zmq.Context()
-        self.sub_port, self.pub_port = self.__get_sub_pub_ports()
-
-        self.gaze_socket = self.__create_pupil_sub_socket(self.TOPIC_GAZE)
-        self.frame_world_socket = self.__create_pupil_sub_socket(self.TOPIC_FRAME_WORLD)
+            self.gaze_socket = self.__create_pupil_sub_socket(self.TOPIC_GAZE)
+            self.frame_world_socket = self.__create_pupil_sub_socket(self.TOPIC_FRAME_WORLD)
 
     def reconnect_sockets(self):
         self.gaze_socket.close()
@@ -69,6 +70,15 @@ class PupilLabsController:
 
     def close_connection(self):
         self.ctx.term()
+
+    def is_service_online(self):
+        """Check if the service is online by attempting to connect to it."""
+        try:
+            # Create a socket object
+            with socket.create_connection((self.host, self.port), timeout=5):
+                return True  # Service is online
+        except (socket.timeout, ConnectionRefusedError):
+            return False  # Service is offline or not reachable
 
     def __create_pupil_sub_socket(self, topic=None):
         pupil_socket = self.ctx.socket(zmq.SUB)

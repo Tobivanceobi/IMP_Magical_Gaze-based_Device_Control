@@ -16,7 +16,11 @@ class PageObjectDetection(Page):
 
     def write(self):
         st.title(self.NAME)
-        st.text("Start the Pupil Core and Pupil Service before running the object detection.")
+        if not self.controller.is_service_online():
+            st.subheader("Connection to EyeTracker can not be established.")
+            st.text("Start the Pupil Core and Pupil Service before running the object detection.")
+            return
+
         st.subheader("Pupil Core Object Detection")
 
 
