@@ -1,0 +1,11 @@
+[paths]
+model_path = "../.local/yolov8n.pt"
+output_path = "../.local/streamlit_output"
+
+[pupil_service]
+host = "localhost"
+port = 50020
+
+[pupil_topics]
+gaze = "gaze."
+front_camera = "frame.world"

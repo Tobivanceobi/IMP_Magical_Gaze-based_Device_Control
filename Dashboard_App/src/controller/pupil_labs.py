@@ -1,12 +1,13 @@
-import zmq
 import msgpack
 import cv2
 import numpy as np
 import zmq
 from PIL import Image
 import socket
+import toml
 
 
+app_config = toml.load("config.toml")
 
 def decode_dict(d):
     result = {}
@@ -22,12 +23,12 @@ def decode_dict(d):
 
 
 class PupilLabsController:
-    TOPIC_GAZE = 'gaze.'
-    TOPIC_FRAME_WORLD = 'frame.world'
+    TOPIC_GAZE = app_config["pupil_topics"]["gaze"]
+    TOPIC_FRAME_WORLD = app_config["pupil_topics"]["front_camera"]
+    SERVICE_HOST = app_config["pupil_service"]["host"]
+    SERVICE_PORT = app_config["pupil_service"]["port"]
 
-    def __init__(self, host='localhost', port=50020):
-        self.host = host
-        self.port = port
+    def __init__(self):
         if self.is_service_online():
             self.ctx = zmq.Context()
             self.sub_port, self.pub_port = self.__get_sub_pub_ports()
@@ -75,20 +76,20 @@ class PupilLabsController:
         """Check if the service is online by attempting to connect to it."""
         try:
             # Create a socket object
-            with socket.create_connection((self.host, self.port), timeout=5):
+            with socket.create_connection((self.SERVICE_HOST, self.SERVICE_PORT), timeout=5):
                 return True  # Service is online
         except (socket.timeout, ConnectionRefusedError):
             return False  # Service is offline or not reachable
 
     def __create_pupil_sub_socket(self, topic=None):
         pupil_socket = self.ctx.socket(zmq.SUB)
-        pupil_socket.connect(f'tcp://{self.host}:{self.sub_port}')
+        pupil_socket.connect(f'tcp://{self.SERVICE_HOST}:{self.sub_port}')
         pupil_socket.subscribe(topic)
         return pupil_socket
 
     def __create_pupil_req_socket(self):
         pupil_socket = self.ctx.socket(zmq.REQ)
-        pupil_socket.connect(f'tcp://{self.host}:{self.port}')
+        pupil_socket.connect(f'tcp://{self.SERVICE_HOST}:{self.SERVICE_PORT}')
         return pupil_socket
 
     def __get_sub_pub_ports(self):
