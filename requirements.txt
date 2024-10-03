@@ -10,3 +10,5 @@ pyzmq~=26.2.0
 numpy~=1.26.4
 pillow~=10.4.0
 toml~=0.10.2
+firebase-admin
+pymongo
