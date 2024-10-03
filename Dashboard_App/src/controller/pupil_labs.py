@@ -50,6 +50,7 @@ class PupilLabsController:
 
             # Decode the message
             gaze = decode_dict(message)
+            gaze["base_data"] = [decode_dict(data) for data in gaze["base_data"]]
 
             gazes.append(gaze)
         return gazes
