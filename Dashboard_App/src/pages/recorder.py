@@ -36,7 +36,7 @@ class PageRecorder(Page):
         col21, col22 = st.columns([1, 1])
 
         with col21:
-            subject_task = st.selectbox("Performed Task", ["None", "Interact", "Search", "Read"], index=1)
+            subject_task = st.selectbox("Performed Task", ["No Interaction", "Interact",], index=1)
 
         with col22:
             recording_time = st.number_input("Recording Time (s)", min_value=1, max_value=100, value=5)
