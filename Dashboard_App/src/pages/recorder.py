@@ -18,6 +18,7 @@ class PageRecorder(Page):
 
     def __init__(self):
         self.controller = PupilLabsController()
+        self.gaze_data = []
 
     def write(self):
         st.title(self.NAME)
@@ -39,7 +40,7 @@ class PageRecorder(Page):
         col21, col22, col13 = st.columns(3)
 
         with col21:
-            subject_task = st.selectbox("Performed Task", ["Interact", "Search", "Read"])
+            subject_task = st.selectbox("Performed Task", ["None", "Interact", "Search", "Read"], index=1)
 
 
         with col22:
@@ -53,20 +54,21 @@ class PageRecorder(Page):
 
         elif subject_task == "Interact":
             # read the image
-            task_img = Image.open("assets/Interact.png")
+            task_img = Image.open("src/assets/Interact.png")
             st.image(task_img, caption="Interact Task")
 
         elif subject_task == "Read":
             # read the image
-            task_img = Image.open("assets/read.png")
+            task_img = Image.open("src/assets/read.png")
             st.image(task_img, caption="Read Task")
 
         if start_btn:
             image_task = st.empty()
-            gaze_data = self._record_gaze_data(recording_time)
+            self.gaze_data = self._record_gaze_data(recording_time)
             image_task.empty()
-            fig = self._create_gaze_figure(gaze_data)
+            fig = self._create_gaze_figure(self.gaze_data)
             st.pyplot(fig)
+            print(self.gaze_data[10])
 
         if st.button("Save Recording"):
 
@@ -75,7 +77,7 @@ class PageRecorder(Page):
                 "age": subject_age,
                 "gender": subject_sex,
                 "task": subject_task,
-                "gaze_data": gaze_data
+                "gaze_data": self.gaze_data
             }
 
             gaze_files = [f for f in os.listdir(self.SAVE_PATH) if subject_task in f]
