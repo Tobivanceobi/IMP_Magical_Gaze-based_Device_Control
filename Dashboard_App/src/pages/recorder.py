@@ -1,24 +1,22 @@
 import matplotlib.pyplot as plt
 import streamlit as st
-from ..controller.firebase import FirebaseController
+from ..controller.mongodb import MongoDBController
 from ..controller.pupil_labs import PupilLabsController
 from ..utils import Page
-
 
 class PageRecorder(Page):
     NAME = "Gaze Recorder"
     SAVE_PATH = "../.local/gaze_data/"
-    FIREBASE_CRED_PATH = "../.local/firebase-adminsdk.json"
 
     def __init__(self):
         self.controller = PupilLabsController()
-        self.firebase_controller = FirebaseController(self.FIREBASE_CRED_PATH)
+        self.mongodb_controller = MongoDBController()
         if 'gaze_data' not in st.session_state:
             st.session_state['gaze_data'] = []
 
     def write(self):
         st.title(self.NAME)
-        st.write("With the Gaze Recorder, you can record your gaze data and save it to Firebase")
+        st.write("With the Gaze Recorder, you can record your gaze data and save it to MongoDB")
 
         st.subheader("Subject Information")
         col11, col12, col13 = st.columns(3)
@@ -36,7 +34,7 @@ class PageRecorder(Page):
         col21, col22 = st.columns([1, 1])
 
         with col21:
-            subject_task = st.selectbox("Performed Task", ["No Interaction", "Interact",], index=1)
+            subject_task = st.selectbox("Performed Task", ["No Interaction", "Interact"], index=1)
 
         with col22:
             recording_time = st.number_input("Recording Time (s)", min_value=1, max_value=100, value=5)
@@ -61,11 +59,11 @@ class PageRecorder(Page):
                 }
 
                 # Create session and save gaze data
-                session_id = self.firebase_controller.create_session(session_info)
+                session_id = self.mongodb_controller.create_session(session_info)
                 gaze_counter = 0
                 print("Saving gaze data...")
                 for gaze_point in st.session_state['gaze_data']:
-                    self.firebase_controller.save_gaze_point(session_id, gaze_point)
+                    self.mongodb_controller.save_gaze_point(session_id, gaze_point)
                     gaze_counter += 1
 
                 print(f"Saved {gaze_counter} gaze points in session {session_id}.")
