@@ -161,6 +161,9 @@ runs/
 # temporary local directory
 .local/
 
+# Wandb files
+Examples/wandb/
+
 # Cython debug symbols
 cython_debug/
 
