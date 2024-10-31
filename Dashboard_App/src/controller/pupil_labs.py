@@ -55,6 +55,25 @@ class PupilLabsController:
             gazes.append(gaze)
         return gazes
 
+    def receive_gaze_data_duration(self, duration):
+        gazes = []
+        topic, payload = self.gaze_socket.recv_multipart()
+        message = msgpack.loads(payload)
+        gaze = decode_dict(message)
+        gaze["base_data"] = [decode_dict(data) for data in gaze["base_data"]]
+        gazes.append(gaze)
+
+        start_time = gaze["timestamp"]
+        dur = 0
+        while dur < duration:
+            topic, payload = self.gaze_socket.recv_multipart()
+            message = msgpack.loads(payload)
+            gaze = decode_dict(message)
+            gaze["base_data"] = [decode_dict(data) for data in gaze["base_data"]]
+            gazes.append(gaze)
+            dur = gaze["timestamp"] - start_time
+        return gazes
+
     def receive_cam_frames(self, num_frames=1):
         frames = []
         for _ in range(num_frames):

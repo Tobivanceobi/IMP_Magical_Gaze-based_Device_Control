@@ -1,3 +1,4 @@
+import numpy as np
 import streamlit as st
 from abc import ABC, abstractmethod
 from PIL import Image, ImageDraw
@@ -61,3 +62,38 @@ def create_smiley_grid(size, cell_size=100):
 
 
     return image
+
+
+# Function to compute fixations
+def compute_fixations(df, dur_tr=1, spat_tr=0.1):
+    fixations = []
+    current_fixation = []
+
+    for i in range(len(df)):
+        if not current_fixation:
+            current_fixation.append(df.iloc[i])
+            continue
+
+        last_fixation = current_fixation[-1]
+        current_point = df.iloc[i]
+
+        # Check if the current point is within spatial threshold and duration threshold
+        time_diff = current_point['timestamp'] - last_fixation['timestamp']
+
+        mean_x = np.mean([point['x'] for point in current_fixation])
+        mean_y = np.mean([point['y'] for point in current_fixation])
+        spatial_diff = np.linalg.norm(current_point[['x', 'y']] - np.array([mean_x, mean_y]))
+
+        if time_diff <= dur_tr and spatial_diff <= spat_tr:
+            current_fixation.append(current_point)
+        else:
+            if len(current_fixation) > 1:  # Only consider fixations with more than 1 point
+                fixations.append(current_fixation)
+            current_fixation = [current_point]  # Start a new fixation
+
+    # Check if there is a remaining fixation to save
+    if len(current_fixation) > 1:
+        fixations.append(current_fixation)
+
+    return fixations
+

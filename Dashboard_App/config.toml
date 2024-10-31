@@ -1,5 +1,5 @@
 [paths]
-model_path = "../.local/yolov8n.pt"
+model_path = "../.local/yolov8s_trained.pt"
 output_path = "../.local/streamlit_output/"
 
 [pupil_service]

@@ -39,7 +39,7 @@ for i, file in enumerate(all_files):
     
     df_12 = pd.merge_asof(df_1, df_2, on='pupil_timestamp', suffixes=('_2d_0', '_2d_1'))
     df_34 = pd.merge_asof(df_3, df_4, on='pupil_timestamp', suffixes=('_3d_0', '_3d_1'))
-    df_all = pd.merge_asof(df_12, df_34, on='pupil_timestamp', suffixes=('_2d', '_3d'))
+    df_all = pd.merge_asof(df_12, df_34, on='pupil_timestamp')
     
     df_all.drop(columns=['eye_id_2d_0', 'eye_id_2d_1', 'eye_id_3d_0', 'eye_id_3d_1'], inplace=True)
 
