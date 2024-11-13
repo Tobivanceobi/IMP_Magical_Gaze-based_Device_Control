@@ -4,7 +4,7 @@ opencv-python~=4.10.0.84
 matplotlib~=3.9.2
 
 streamlit~=1.38.0
-ultralytics~=8.2.92
+ultralytics
 pandas~=2.2.2
 pyzmq~=26.2.0
 numpy~=1.26.4

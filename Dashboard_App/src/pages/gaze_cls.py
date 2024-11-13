@@ -29,9 +29,11 @@ class PageGazeCls(Page):
 
             gaze_df = pd.DataFrame(norm_pos, columns=['x', 'y'])
             gaze_df['timestamp'] = timestamps
+            # print the total time of the recording
+            print(f"Recording time: {timestamps[-1] - timestamps[0]:.2f} seconds")
             self._plot_norm_pos(norm_pos, timestamps)
 
-            fixations = compute_fixations(gaze_df, dur_tr=1, spat_tr=0.1)
+            fixations = compute_fixations(gaze_df, dur_tr=0.2, spat_tr=0.1)
             print(len(fixations))
             self._plot_fixations(fixations)
 
