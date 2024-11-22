@@ -1,51 +1,70 @@
 import numpy as np
-import zmq
-import msgpack
 
+
+def cross_product(v1, v2):
+    return v1[0] * v2[1] - v1[1] * v2[0]
+
+def is_point_in_triangle(p1, p2, p3, p):
+    def sign(a, b, c):
+        return (a[0] - c[0]) * (b[1] - c[1]) - (b[0] - c[0]) * (a[1] - c[1])
+
+    b1 = sign(p, p1, p2) < 0.0
+    b2 = sign(p, p2, p3) < 0.0
+    b3 = sign(p, p3, p1) < 0.0
+
+    return ((b1 == b2) and (b2 == b3))
 
 class MovementTracker:
 
-    def __init__(self, origin_point, threshold, min_move_dist=None, epsilon=None):
+    def __init__(self, fixation, threshold, min_dist, max_dist, epsilon=None):
         """
         Initializes the movement tracker.
 
         Parameters:
             origin_point (tuple): The (x, y) coordinates of the origin.
-            threshold (float): Minimum distance between two points to be considered a movement.
+            threshold (int): accepted number of points out of min_dist and max_dist.
             epsilon (float): Tolerance for checking if the final point returns to the origin.
-            min_move_dist (list): Minimum distance for a movement to be considered significant.
+            min_dist (float): Minimum distance for a significant movement.
+            max_dist (float): Maximum distance for a significant movement.
         """
-        self.origin = np.array(origin_point)
+        self.origin = np.array(fixation['norm_pos'])
+        self.origin_time = fixation['timestamp']
+
+        # Areal markings for a box around the origin
+        self.l_1 = [self.origin[0] - 2, self.origin[1] + 2]
+        self.l_2 = [self.origin[0] - 2, self.origin[1] - 2]
+        self.r_1 = [self.origin[0] + 2, self.origin[1] + 2]
+        self.r_2 = [self.origin[0] + 2, self.origin[1] - 2]
+
         self.threshold = threshold
-        self.min_move_dist = min_move_dist
+        self.min_dist = min_dist
+        self.max_dist = max_dist
         self.epsilon = epsilon
         self.direction = None
         self.data_buffer = [self.origin]
-        self.displacements = []
+        self.distances = []
         self.movement_detected = False
         self.out_of_bounds_count = 0
 
-    def _detect_direction(self, displacement):
-        """
-        Detects the direction of movement based on the displacement.
+    def _detect_direction(self, point):
+        if is_point_in_triangle(self.l_2, self.l_1, self.origin, point):
+            return "right"
+        elif is_point_in_triangle(self.r_2, self.r_1, self.origin, point):
+            return "left"
+        elif is_point_in_triangle(self.l_1, self.r_1, self.origin, point):
+            return "down"
+        elif is_point_in_triangle(self.l_2, self.r_2, self.origin, point):
+            return "up"
+        else:
+            return self.direction
 
-        Parameters:
-            displacement (np.ndarray): The x, y displacement vector.
-
-        Returns:
-            str: 'up', 'down', 'left', 'right', or None.
-        """
-        if abs(displacement[0]) > abs(displacement[1]):  # Horizontal movement
-            return 'left' if displacement[0] > 0 else 'right'
-        else:  # Vertical movement
-            return 'down' if displacement[1] > 0 else 'up'
-
-    def update(self, new_point):
+    def update(self, new_point, timestamp):
         """
         Updates the tracker with a new point and analyzes movement.
 
         Parameters:
             new_point (tuple): The (x, y) coordinates of the new data point.
+            timestamp (int): The timestamp of the new data point.
 
         Returns:
             dict: A dictionary with keys:
@@ -55,23 +74,27 @@ class MovementTracker:
         """
 
         new_point = np.array(new_point)
+        displacement = self.origin - new_point
+        distance = np.linalg.norm(displacement)
+
+        displacement = self.data_buffer[-1] - new_point
+        distance_last = np.linalg.norm(displacement)
+        if self.min_dist > distance_last or distance_last > self.max_dist:
+            timm_dif = timestamp - self.origin_time
+            if timm_dif >= self.threshold:
+                return None
+            return {'moved': False, 'direction': None, 'returned': False}
+
+        self.origin_time = timestamp
         self.data_buffer.append(new_point)
+        self.distances.append(distance)
 
-        # Calculate the last displacement
-        displacement_last = new_point - self.data_buffer[-2]
-        distance_last = np.linalg.norm(displacement_last)
-
-        # Determine direction of movement
-        displacement_origin = new_point - self.origin
-        self.displacements.append(displacement_origin)
-
-        distances = [np.linalg.norm(displacement) for displacement in self.displacements]
-        self.direction = self._detect_direction(self.displacements[distances.index(max(distances))])
-        if self.direction in ['up', 'down']:
-            if max(distances) > self.min_move_dist[0] and np.linalg.norm(displacement_origin) <= self.epsilon:
-                return {'moved': True, 'direction': self.direction, 'returned': True}
-        else:
-            if max(distances) > self.min_move_dist[1] and np.linalg.norm(displacement_origin) <= self.epsilon:
+        if max(self.distances) > 0.2:
+            self.movement_detected = True
+            self.direction = self._detect_direction(new_point)
+            if np.linalg.norm(new_point - self.origin) <= self.epsilon:
                 return {'moved': True, 'direction': self.direction, 'returned': True}
 
-        return {'moved': True, 'direction': self.direction, 'returned': False}
+            return {'moved': True, 'direction': self.direction, 'returned': False}
+
+        return {'moved': False, 'direction': None, 'returned': False}
