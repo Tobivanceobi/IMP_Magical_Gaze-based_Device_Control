@@ -13,3 +13,4 @@ toml~=0.10.2
 firebase-admin
 pymongo
 scikit-learn
+requests
